@@ -32,6 +32,7 @@ export interface CustomerRecord {
   address: string;
   city: string;
   country: string;
+  tags: string[];
   ownerId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -46,6 +47,7 @@ export interface LeadRecord {
   phone: string;
   source: string;
   status: LeadStatus;
+  tags: string[];
   ownerId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -220,6 +222,7 @@ export async function buildSeed(): Promise<SeedData> {
       address: `${i + 1} rue du Commerce`,
       city: pick(cities, i),
       country: 'France',
+      tags: i % 5 === 0 ? ['VIP'] : i % 7 === 0 ? ['À relancer'] : [],
       ownerId,
       createdAt: iso(i * 9, 5),
       updatedAt: iso(i * 9, 5),
@@ -240,6 +243,7 @@ export async function buildSeed(): Promise<SeedData> {
       phone: `+33 6 ${String(50 + i).padStart(2, '0')} ${String(60 + i).padStart(2, '0')} ${String(70 + i).padStart(2, '0')} ${String(80 + i).padStart(2, '0')}`,
       source: pick(leadSources, i),
       status: pick(leadStatuses, i),
+      tags: i % 6 === 0 ? ['Hot'] : i % 8 === 0 ? ['Stratégique'] : [],
       ownerId,
       createdAt: iso(i * 7, 4),
       updatedAt: iso(i * 7, 4),

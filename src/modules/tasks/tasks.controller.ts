@@ -16,15 +16,20 @@ export class TasksController {
   @Get()
   async list(
     @CurrentUser() user: RequestUser,
-    @Query() q: PaginationDto & { status?: string; relatedType?: string; relatedId?: string },
+    @Query() q: PaginationDto & { status?: string; priority?: string; relatedType?: string; relatedId?: string; dueTo?: string },
   ) {
     const filters: Record<string, unknown> = {};
     if (q.status) filters.status = q.status;
+    if (q.priority) filters.priority = q.priority;
     if (q.relatedType) filters.relatedType = q.relatedType;
     if (q.relatedId) filters.relatedId = q.relatedId;
+    if (q.dueTo) filters.dueDate = q.dueTo;
+    if (q.ownerId) filters.ownerId = q.ownerId;
     return this.svc.findMany(user, {
       page: q.page, limit: q.limit, search: q.search,
       filters: Object.keys(filters).length ? filters : undefined,
+      sortBy: q.sortBy, sortOrder: q.sortOrder,
+      dateFrom: q.dateFrom, dateTo: q.dateTo,
     });
   }
 

@@ -9,6 +9,8 @@ import { ActivitiesModule } from './modules/activities/activities.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { NotesModule } from './modules/notes/notes.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { SearchModule } from './modules/search/search.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     TasksModule,
     NotesModule,
     DashboardModule,
+    SearchModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
 })

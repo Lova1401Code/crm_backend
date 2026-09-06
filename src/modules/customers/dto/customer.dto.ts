@@ -1,5 +1,5 @@
 import {
-  IsEmail, IsNotEmpty, IsOptional, IsString,
+  IsEmail, IsNotEmpty, IsOptional, IsString, IsArray,
 } from 'class-validator';
 
 export class CreateCustomerDto {
@@ -27,6 +27,9 @@ export class CreateCustomerDto {
   @IsString() @IsOptional()
   country?: string;
 
+  @IsArray() @IsString({ each: true }) @IsOptional()
+  tags?: string[];
+
   @IsString() @IsOptional()
   ownerId?: string;
 }
@@ -40,5 +43,6 @@ export class UpdateCustomerDto {
   @IsString() @IsOptional() address?: string;
   @IsString() @IsOptional() city?: string;
   @IsString() @IsOptional() country?: string;
+  @IsArray() @IsString({ each: true }) @IsOptional() tags?: string[];
   @IsString() @IsOptional() ownerId?: string;
 }

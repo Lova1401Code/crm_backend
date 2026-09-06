@@ -1,5 +1,5 @@
 import {
-  IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString,
+  IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsArray,
 } from 'class-validator';
 
 export class CreateLeadDto {
@@ -11,6 +11,8 @@ export class CreateLeadDto {
   @IsString() @IsOptional() source?: string;
   @IsEnum(['NEW', 'CONTACTED', 'INTERESTED', 'NEGOTIATING', 'CONVERTED']) @IsOptional()
   status?: 'NEW' | 'CONTACTED' | 'INTERESTED' | 'NEGOTIATING' | 'CONVERTED';
+  @IsArray() @IsString({ each: true }) @IsOptional()
+  tags?: string[];
   @IsString() @IsOptional() ownerId?: string;
 }
 
@@ -23,5 +25,6 @@ export class UpdateLeadDto {
   @IsString() @IsOptional() source?: string;
   @IsEnum(['NEW', 'CONTACTED', 'INTERESTED', 'NEGOTIATING', 'CONVERTED']) @IsOptional()
   status?: 'NEW' | 'CONTACTED' | 'INTERESTED' | 'NEGOTIATING' | 'CONVERTED';
+  @IsArray() @IsString({ each: true }) @IsOptional() tags?: string[];
   @IsString() @IsOptional() ownerId?: string;
 }

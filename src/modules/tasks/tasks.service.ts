@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MockDatabaseService } from '../../infrastructure/mock/mock-database.service';
 import { NotFoundError } from '../../common/domain/domain-error';
 import {
-  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc,
+  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc, applyQueryOptions,
 } from '../../common/utils/repo-utils';
 import {
   enforceOwnership, mergeFilters, assertCanAssignOwner, forcedOwnerId,
@@ -15,11 +15,10 @@ import { RequestUser } from '../../common/guards/jwt-auth.guard';
 export class TasksService {
   constructor(private readonly db: MockDatabaseService) {}
 
-  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown> }) {
+  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown>; sortBy?: string; sortOrder?: 'asc' | 'desc'; dateFrom?: string; dateTo?: string }) {
     let items = sortByCreatedAtDesc(this.db.tasks);
-    items = matchSearch(items, opts.search || '', ['title', 'description'] as (keyof TaskRecord)[]);
     const filters = mergeFilters(user, opts.filters);
-    items = items.filter((t) => !filters || Object.entries(filters).every(([k, v]) => v === undefined || v === null || v === '' || t[k as keyof TaskRecord] === v));
+    items = applyQueryOptions(items as unknown as Record<string, unknown>[], ['title', 'description'], { ...opts, filters }) as unknown as TaskRecord[];
     const total = items.length;
     return { items: paginate(items, opts.page || 1, opts.limit || 10).items, total };
   }

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { MockDatabaseService } from '../../infrastructure/mock/mock-database.service';
 import { ActivityLoggerService } from '../../common/services/activity-logger.service';
+import { LeadScoringService } from './lead-scoring.service';
 import {
   ConflictError, NotFoundError,
 } from '../../common/domain/domain-error';
 import {
-  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc,
+  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc, applyQueryOptions,
 } from '../../common/utils/repo-utils';
 import {
   enforceOwnership, mergeFilters, assertCanAssignOwner, forcedOwnerId,
@@ -19,22 +20,26 @@ export class LeadsService {
   constructor(
     private readonly db: MockDatabaseService,
     private readonly logger: ActivityLoggerService,
+    private readonly scoring: LeadScoringService,
   ) {}
 
-  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown> }) {
+  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown>; sortBy?: string; sortOrder?: 'asc' | 'desc'; dateFrom?: string; dateTo?: string }) {
     let items = sortByCreatedAtDesc(this.db.leads);
-    items = matchSearch(items, opts.search || '', ['firstname', 'lastname', 'email', 'phone', 'company'] as (keyof LeadRecord)[]);
     const filters = mergeFilters(user, opts.filters);
-    items = items.filter((l) => !filters || Object.entries(filters).every(([k, v]) => v === undefined || v === null || v === '' || l[k as keyof LeadRecord] === v));
-    const total = items.length;
-    return { items: paginate(items, opts.page || 1, opts.limit || 10).items, total };
+    items = applyQueryOptions(items as unknown as Record<string, unknown>[], ['firstname', 'lastname', 'email', 'phone', 'company'], { ...opts, filters }) as unknown as LeadRecord[];
+    const scored = this.scoring.scoreAll(user, items);
+    if (opts.sortBy === 'score') {
+      scored.sort((a, b) => (opts.sortOrder === 'asc' ? a.score - b.score : b.score - a.score));
+    }
+    const total = scored.length;
+    return { items: paginate(scored, opts.page || 1, opts.limit || 10).items, total };
   }
 
-  async findOne(user: RequestUser, id: string): Promise<LeadRecord> {
+  async findOne(user: RequestUser, id: string): Promise<LeadRecord & { score: number }> {
     const l = this.db.leads.find((x) => x.id === id);
     if (!l) throw new NotFoundError('Prospect introuvable');
     enforceOwnership(user, l.ownerId);
-    return l;
+    return { ...l, score: this.scoring.score(l) };
   }
 
   async create(user: RequestUser, dto: CreateLeadDto): Promise<LeadRecord> {
@@ -49,6 +54,7 @@ export class LeadsService {
       phone: dto.phone || '',
       source: dto.source || '',
       status: dto.status || 'NEW',
+      tags: dto.tags || [],
       ownerId: forcedOwnerId(user, dto.ownerId),
       createdAt: ts,
       updatedAt: ts,
@@ -72,6 +78,7 @@ export class LeadsService {
       ...(dto.phone !== undefined && { phone: dto.phone }),
       ...(dto.source !== undefined && { source: dto.source }),
       ...(dto.status !== undefined && { status: dto.status }),
+      ...(dto.tags !== undefined && { tags: dto.tags }),
       ...(dto.ownerId !== undefined && { ownerId: dto.ownerId }),
       updatedAt: nowIso(),
     };
@@ -105,6 +112,7 @@ export class LeadsService {
       address: '',
       city: '',
       country: 'France',
+      tags: [],
       ownerId: lead.ownerId,
       createdAt: ts,
       updatedAt: ts,

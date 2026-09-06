@@ -6,7 +6,7 @@ import {
   NotFoundError, UnauthorizedError, ValidationError,
 } from '../../common/domain/domain-error';
 import {
-  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc,
+  matchSearch, paginate, uid, nowIso, sortByCreatedAtDesc, applyQueryOptions,
 } from '../../common/utils/repo-utils';
 import {
   enforceOwnership, mergeFilters, assertCanAssignOwner, forcedOwnerId,
@@ -23,11 +23,10 @@ export class DealsService {
     private readonly customers: CustomersService,
   ) {}
 
-  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown> }) {
+  async findMany(user: RequestUser, opts: { page?: number; limit?: number; search?: string; filters?: Record<string, unknown>; sortBy?: string; sortOrder?: 'asc' | 'desc'; dateFrom?: string; dateTo?: string }) {
     let items = sortByCreatedAtDesc(this.db.deals);
-    items = matchSearch(items, opts.search || '', ['title'] as (keyof DealRecord)[]);
     const filters = mergeFilters(user, opts.filters);
-    items = items.filter((d) => !filters || Object.entries(filters).every(([k, v]) => v === undefined || v === null || v === '' || d[k as keyof DealRecord] === v));
+    items = applyQueryOptions(items as unknown as Record<string, unknown>[], ['title'], { ...opts, filters }) as unknown as DealRecord[];
     const total = items.length;
     return { items: paginate(items, opts.page || 1, opts.limit || 10).items, total };
   }
