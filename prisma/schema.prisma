@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COMMERCIAL
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  NEGOTIATING
+  CONVERTED
+}
+
+enum DealStage {
+  PROSPECT
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  EVENT
+}
+
+enum RelatedEntityType {
+  CUSTOMER
+  LEAD
+  DEAL
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+model User {
+  id        String     @id @default(cuid())
+  firstname String
+  lastname  String
+  email     String     @unique
+  phone     String     @default("")
+  role      Role       @default(COMMERCIAL)
+  status    UserStatus @default(ACTIVE)
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  customers  Customer[]
+  leads      Lead[]
+  deals      Deal[]
+  activities Activity[]
+  tasks      Task[]
+  notes      Note[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  firstname String
+  lastname  String
+  company   String   @default("")
+  email     String   @default("")
+  phone     String   @default("")
+  address   String   @default("")
+  city      String   @default("")
+  country   String   @default("France")
+  tags      String[]
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  deals      Deal[]
+  activities Activity[]
+  tasks      Task[]
+  notes      Note[]
+}
+
+model Lead {
+  id        String     @id @default(cuid())
+  firstname String
+  lastname  String
+  company   String     @default("")
+  email     String     @default("")
+  phone     String     @default("")
+  source    String     @default("")
+  status    LeadStatus @default(NEW)
+  tags      String[]
+  ownerId   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  activities Activity[]
+  tasks      Task[]
+  notes      Note[]
+}
+
+model Deal {
+  id               String    @id @default(cuid())
+  title            String
+  customerId       String
+  amount           Float     @default(0)
+  stage            DealStage @default(PROSPECT)
+  expectedCloseDate DateTime
+  notes            String    @default("")
+  ownerId          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  activities Activity[]
+  tasks      Task[]
+  notes      Note[]
+}
+
+model Activity {
+  id          String             @id @default(cuid())
+  type        ActivityType
+  subject     String
+  description String             @default("")
+  relatedType RelatedEntityType
+  relatedId   String
+  ownerId     String?
+  occurredAt  DateTime
+  createdAt   DateTime           @default(now())
+
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([relatedType, relatedId])
+  @@index([ownerId])
+}
+
+model Task {
+  id           String              @id @default(cuid())
+  title        String
+  description  String              @default("")
+  dueDate      DateTime
+  priority     TaskPriority        @default(MEDIUM)
+  status       TaskStatus          @default(OPEN)
+  relatedType  RelatedEntityType?
+  relatedId    String?
+  ownerId      String?
+  completedAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([relatedType, relatedId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model Note {
+  id           String             @id @default(cuid())
+  content      String
+  relatedType  RelatedEntityType
+  relatedId    String
+  authorId     String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([relatedType, relatedId])
+  @@index([authorId])
+}
