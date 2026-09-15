@@ -11,9 +11,11 @@ import { NotesModule } from './modules/notes/notes.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SearchModule } from './modules/search/search.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MockDatabaseModule } from './infrastructure/mock/mock-database.module';
 
 @Module({
   imports: [
+    MockDatabaseModule,
     AuthModule,
     UsersModule,
     CustomersModule,
