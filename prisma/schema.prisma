@@ -95,9 +95,6 @@ model Customer {
 
   owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   deals      Deal[]
-  activities Activity[]
-  tasks      Task[]
-  notes      Note[]
 }
 
 model Lead {
@@ -115,9 +112,6 @@ model Lead {
   updatedAt DateTime   @updatedAt
 
   owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  activities Activity[]
-  tasks      Task[]
-  notes      Note[]
 }
 
 model Deal {
@@ -134,9 +128,6 @@ model Deal {
 
   customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
   owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  activities Activity[]
-  tasks      Task[]
-  notes      Note[]
 }
 
 model Activity {
